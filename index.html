@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1116">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Multi-AI Commerce Hub</title>
+<style>
+:root{--bg:#0e1116;--sf:#171b22;--sf2:#1f242d;--bd:#2b313b;--tx:#e8eaed;--mt:#8b93a1;--ac:#f2b84b;--ok:#4ac28a;--er:#ef6b6b;--oa:#10a37f;--gm:#5b9bff;--cl:#e08a3c;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+header{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.2px}
+h2{font-size:14px;margin:18px 0 8px;font-weight:600;color:var(--mt)}
+main{flex:1;overflow-y:auto;padding:12px 16px 24px;-webkit-overflow-scrolling:touch}
+nav{display:flex;border-top:1px solid var(--bd);background:var(--sf);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;min-height:52px;background:none;border:0;color:var(--mt);font:inherit;font-size:13px}
+nav button.on{color:var(--ac);box-shadow:inset 0 2px 0 var(--ac)}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+textarea,input,select{width:100%;background:var(--sf2);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:11px 12px;font:inherit;font-size:16px;margin:4px 0 8px}
+textarea{min-height:96px;resize:vertical}
+label{font-size:13px;color:var(--mt)}
+button.b{min-height:46px;border-radius:10px;border:1px solid var(--bd);background:var(--sf2);color:var(--tx);font:inherit;font-weight:600;padding:0 14px;width:100%;margin:4px 0}
+button.p{background:var(--ac);color:#1a1405;border-color:var(--ac)}
+button.sm{width:auto;min-height:36px;font-size:13px;margin:0 6px 0 0}
+button:disabled{opacity:.5}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sw{position:relative;width:48px;height:28px;flex:none}
+.sw input{opacity:0;position:absolute;inset:0;margin:0;width:100%;height:100%;z-index:2}
+.sw i{position:absolute;inset:0;background:var(--sf2);border:1px solid var(--bd);border-radius:20px;transition:.2s}
+.sw i:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--mt);transition:.2s}
+.sw input:checked+i{background:var(--ac);border-color:var(--ac)}
+.sw input:checked+i:after{transform:translateX(20px);background:#1a1405}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+.res{white-space:pre-wrap;word-break:break-word;font-size:14px;margin-top:8px;max-height:260px;overflow:auto}
+.err{color:var(--er)}.ok{color:var(--ok)}.mt{color:var(--mt);font-size:13px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px}
+.chip{flex:none;border:1px solid var(--bd);border-radius:20px;padding:8px 12px;font-size:13px;background:var(--sf);color:var(--tx)}
+pre{white-space:pre-wrap;word-break:break-word;font-size:12.5px;background:var(--sf2);border-radius:10px;padding:10px;max-height:340px;overflow:auto;margin:8px 0}
+#lock{position:fixed;inset:0;background:var(--bg);z-index:9;display:flex;align-items:center;padding:24px}
+#lock>div{width:100%;max-width:380px;margin:auto}
+#toast{position:fixed;left:16px;right:16px;bottom:calc(70px + env(safe-area-inset-bottom));background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:12px;font-size:14px;display:none;z-index:10}
+</style>
+</head>
+<body>
+
+<div id="lock"><div>
+  <h1 style="font-size:22px">Multi-AI Commerce Hub</h1>
+  <p class="mt" id="lock-msg">Tus claves se cifran con AES-256 en este dispositivo. Crea una contraseña maestra para proteger la bóveda.</p>
+  <input id="pass" type="password" placeholder="Contraseña maestra" autocomplete="current-password">
+  <input id="pass2" type="password" placeholder="Repite la contraseña" style="display:none">
+  <button class="b p" id="unlock">Desbloquear</button>
+  <div id="lock-err" class="err mt"></div>
+</div></div>
+
+<header><h1>Multi-AI Hub</h1><span class="mt" id="st"></span></header>
+
+<main>
+  <section class="tab on" id="t-hub">
+    <h2>Modelos activos</h2>
+    <div class="card" id="switches"></div>
+
+    <h2>Consulta</h2>
+    <div class="chips" id="chips"></div>
+    <textarea id="prompt" placeholder="Ej.: Tendencias de gadgets de escritorio y una ficha de producto para Shopify"></textarea>
+    <div class="row" style="gap:8px"><button class="b" id="photoBtn">Adjuntar foto</button><button class="b" id="micBtn">Dictar</button></div>
+    <input type="file" id="photo" accept="image/*" hidden>
+    <div id="thumb" class="mt"></div>
+    <button class="b p" id="send">Enviar a los modelos activos</button>
+
+    <h2>Respuestas</h2>
+    <div id="results"><p class="mt">Aquí verás cada respuesta lado a lado. Marca las que quieras consolidar.</p></div>
+    <button class="b" id="consol" disabled>Consolidar respuestas</button>
+
+    <div id="final" style="display:none">
+      <h2>Ficha consolidada (editable)</h2>
+      <textarea id="finalTxt" style="min-height:200px;font-family:ui-monospace,monospace;font-size:13px"></textarea>
+      <button class="b p" id="toShopify">Enviar a Shopify (borrador)</button>
+      <button class="b" id="toAlibaba">Buscar proveedores en Alibaba</button>
+    </div>
+  </section>
+
+  <section class="tab" id="t-shop">
+    <h2>Shopify</h2>
+    <button class="b" data-sh="products">Ver productos</button>
+    <button class="b" data-sh="orders">Ver pedidos</button>
+    <button class="b" data-sh="inventory">Ver inventario</button>
+    <h2>Alibaba</h2>
+    <input id="alq" placeholder="Palabra clave de producto o proveedor">
+    <button class="b" id="alGo">Buscar en Alibaba</button>
+    <pre id="out">Sin datos todavía.</pre>
+  </section>
+
+  <section class="tab" id="t-set">
+    <h2>Claves y modelos</h2>
+    <div class="card">
+      <label>OpenAI API key</label><input data-k="oaKey" type="password" autocomplete="off">
+      <label>Modelo OpenAI</label><input data-k="oaModel">
+      <label>Gemini API key</label><input data-k="gmKey" type="password" autocomplete="off">
+      <label>Modelo Gemini</label><input data-k="gmModel">
+      <label>Anthropic API key</label><input data-k="clKey" type="password" autocomplete="off">
+      <label>Modelo Claude</label><input data-k="clModel">
+    </div>
+    <h2>Shopify</h2>
+    <div class="card">
+      <label>Dominio (mitienda.myshopify.com)</label><input data-k="shDomain" autocapitalize="off">
+      <label>Admin API access token</label><input data-k="shToken" type="password" autocomplete="off">
+    </div>
+    <h2>Alibaba Open Platform</h2>
+    <div class="card">
+      <label>Endpoint de la API</label><input data-k="alEndpoint" placeholder="https://…" autocapitalize="off">
+      <label>Nombre del método (según la documentación)</label><input data-k="alMethod" autocapitalize="off">
+      <label>App key</label><input data-k="alKey" type="password" autocomplete="off">
+      <label>App secret</label><input data-k="alSecret" type="password" autocomplete="off">
+    </div>
+    <h2>Proxy</h2>
+    <div class="card">
+      <p class="mt">Shopify y Alibaba bloquean llamadas directas desde el navegador (CORS). Indica un proxy tuyo que reciba POST con <code>{url, method, headers, body}</code> y reenvíe la petición.</p>
+      <label>URL del proxy</label><input data-k="proxy" placeholder="https://mi-proxy.workers.dev" autocapitalize="off">
+      <div class="row"><label>Enviar también las llamadas de IA por el proxy</label><span class="sw"><input type="checkbox" data-k="aiProxy"><i></i></span></div>
+    </div>
+    <button class="b p" id="save">Guardar cifrado</button>
+    <button class="b" id="lockBtn">Bloquear</button>
+    <button class="b" id="wipe" style="color:var(--er)">Borrar bóveda</button>
+  </section>
+</main>
+
+<div id="toast"></div>
+<nav>
+  <button class="on" data-t="hub">Hub</button>
+  <button data-t="shop">Tienda</button>
+  <button data-t="set">Ajustes</button>
+</nav>
+
+<script>
+const $=id=>document.getElementById(id);
+const enc=new TextEncoder(),dec=new TextDecoder();
+const DEF={oaKey:'',oaModel:'gpt-4o',gmKey:'',gmModel:'gemini-2.5-pro',clKey:'',clModel:'claude-sonnet-5-5',shDomain:'',shToken:'',alEndpoint:'',alMethod:'',alKey:'',alSecret:'',proxy:'',aiProxy:false,on:{oa:true,gm:true,cl:true}};
+let cfg={...DEF},key=null,salt=null,results={};
+const SH_VER='2025-01';
+
+/* ---------- utilidades ---------- */
+function toast(m,err){const t=$('toast');t.textContent=m;t.style.color=err?'var(--er)':'var(--tx)';t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3500)}
+const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const store={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v);return true}catch{return false}},del:k=>{try{localStorage.removeItem(k)}catch{}}};
+
+/* ---------- bóveda cifrada (AES-GCM + PBKDF2) ---------- */
+async function derive(pass,s){const m=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt:s,iterations:250000,hash:'SHA-256'},m,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function saveVault(){const iv=crypto.getRandomValues(new Uint8Array(12));const d=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(cfg)));
+  if(!store.set('vault',JSON.stringify({s:b64(salt),iv:b64(iv),d:b64(d)})))throw new Error('No se pudo guardar en este navegador')}
+async function openVault(pass){const v=JSON.parse(store.get('vault'));salt=unb64(v.s);key=await derive(pass,salt);
+  const p=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(v.iv)},key,unb64(v.d));cfg={...DEF,...JSON.parse(dec.decode(p))}}
+
+const hasVault=!!store.get('vault');
+if(!hasVault){$('pass2').style.display='block'}else{$('lock-msg').textContent='Introduce tu contraseña maestra.'}
+if(!(window.crypto&&crypto.subtle)){$('lock-err').textContent='Este navegador no permite cifrado. Abre la app desde HTTPS.'}
+$('unlock').onclick=async()=>{
+  const p=$('pass').value,e=$('lock-err');e.textContent='';
+  try{
+    if(!p||p.length<8)throw new Error('Usa al menos 8 caracteres.');
+    if(hasVault){await openVault(p)}
+    else{if(p!==$('pass2').value)throw new Error('Las contraseñas no coinciden.');salt=crypto.getRandomValues(new Uint8Array(16));key=await derive(p,salt);await saveVault()}
+    $('lock').style.display='none';$('pass').value=$('pass2').value='';init();readShared()
+  }catch(x){e.textContent=hasVault?'Contraseña incorrecta o bóveda dañada.':x.message}
+};
+$('pass').onkeydown=e=>{if(e.key==='Enter')$('unlock').click()};
+
+/* ---------- red ---------- */
+async function req(url,o={},via=false){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),45000);
+  try{
+    let r;
+    if(via){
+      if(!cfg.proxy)throw new Error('Configura la URL del proxy en Ajustes.');
+      r=await fetch(cfg.proxy,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,method:o.method||'GET',headers:o.headers||{},body:o.body||null}),signal:c.signal});
+    }else r=await fetch(url,{...o,signal:c.signal});
+    const txt=await r.text();let j;try{j=JSON.parse(txt)}catch{j=txt}
+    if(!r.ok)throw new Error('HTTP '+r.status+': '+(typeof j==='string'?j:JSON.stringify(j.error||j)).slice(0,300));
+    return j;
+  }catch(e){throw new Error(e.name==='AbortError'?'Tiempo de espera agotado (45 s).':e.name==='TypeError'?'Error de red o CORS. Prueba con el proxy.':e.message)}
+  finally{clearTimeout(t)}
+}
+const JH={'content-type':'application/json'};
+
+/* ---------- proveedores de IA ---------- */
+const AIS={
+  oa:{n:'ChatGPT',c:'var(--oa)',k:'oaKey',m:'oaModel',call:async(p,img)=>{
+    const j=await req('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{...JH,authorization:'Bearer '+cfg.oaKey},body:JSON.stringify({model:cfg.oaModel,messages:[{role:'user',content:img?[{type:'text',text:p},{type:'image_url',image_url:{url:'data:'+img.mime+';base64,'+img.data}}]:p}]})},cfg.aiProxy);
+    return j.choices[0].message.content}},
+  gm:{n:'Gemini',c:'var(--gm)',k:'gmKey',m:'gmModel',call:async(p,img)=>{
+    const j=await req('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(cfg.gmModel)+':generateContent',{method:'POST',headers:{...JH,'x-goog-api-key':cfg.gmKey},body:JSON.stringify({contents:[{parts:[{text:p},...(img?[{inline_data:{mime_type:img.mime,data:img.data}}]:[])]}]})},cfg.aiProxy);
+    return j.candidates[0].content.parts.map(x=>x.text||'').join('')}},
+  cl:{n:'Claude',c:'var(--cl)',k:'clKey',m:'clModel',call:async(p,img)=>{
+    const j=await req('https://api.anthropic.com/v1/messages',{method:'POST',headers:{...JH,'x-api-key':cfg.clKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:cfg.clModel,max_tokens:1500,messages:[{role:'user',content:img?[{type:'image',source:{type:'base64',media_type:img.mime,data:img.data}},{type:'text',text:p}]:p}]})},cfg.aiProxy);
+    return j.content.filter(b=>b.type==='text').map(b=>b.text).join('')}}
+};
+function ask(id,p,img){if(!cfg[AIS[id].k])return Promise.reject(new Error('Falta la API key en Ajustes.'));return AIS[id].call(p,img)}
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ---------- UI ---------- */
+const PRESETS=[
+  ['Ficha de producto','Crea una ficha de producto optimizada para Shopify (título SEO, descripción, etiquetas, precio sugerido) para: '],
+  ['Competencia y precios','Analiza la competencia y el rango de precios en el mercado para: '],
+  ['Campaña multicanal','Diseña una campaña publicitaria multicanal (Meta, TikTok, email) para: ']
+];
+function init(){
+  $('chips').innerHTML=PRESETS.map((p,i)=>'<button class="chip" data-p="'+i+'">'+p[0]+'</button>').join('');
+  $('chips').onclick=e=>{const i=e.target.dataset.p;if(i!=null){$('prompt').value=PRESETS[i][1];$('prompt').focus()}};
+  $('switches').innerHTML=Object.entries(AIS).map(([id,a])=>'<div class="row" style="min-height:44px"><span><span class="dot" style="background:'+a.c+'"></span>'+a.n+' <span class="mt" id="mn-'+id+'"></span></span><span class="sw"><input type="checkbox" data-ai="'+id+'"'+(cfg.on[id]?' checked':'')+'><i></i></span></div>').join('');
+  $('switches').onchange=async e=>{const id=e.target.dataset.ai;if(id){cfg.on[id]=e.target.checked;try{await saveVault()}catch{}}};
+  fill();status();
+}
+function fill(){document.querySelectorAll('[data-k]').forEach(i=>{const v=cfg[i.dataset.k];if(i.type==='checkbox')i.checked=!!v;else i.value=v||''});Object.keys(AIS).forEach(id=>{const n=$('mn-'+id);if(n)n.textContent=cfg[AIS[id].m]})}
+function status(){const n=Object.keys(AIS).filter(id=>cfg[AIS[id].k]).length;$('st').textContent=n+'/3 IA configuradas'}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('t-'+b.dataset.t).classList.add('on')});
+
+$('save').onclick=async()=>{
+  document.querySelectorAll('[data-k]').forEach(i=>{cfg[i.dataset.k]=i.type==='checkbox'?i.checked:i.value.trim()});
+  try{await saveVault();fill();status();toast('Configuración guardada y cifrada.')}catch(e){toast(e.message,true)}
+};
+$('lockBtn').onclick=()=>location.reload();
+$('wipe').onclick=()=>{if(confirm('Se borrarán todas las claves guardadas. ¿Continuar?')){store.del('vault');location.reload()}};
+
+/* ---------- consulta paralela ---------- */
+$('send').onclick=async()=>{
+  const p=$('prompt').value.trim();
+  if(!p)return toast('Escribe una consulta.',true);
+  const ids=Object.keys(AIS).filter(id=>cfg.on[id]);
+  if(!ids.length)return toast('Activa al menos un modelo.',true);
+  results={};$('final').style.display='none';$('consol').disabled=true;$('send').disabled=true;
+  $('results').innerHTML=ids.map(id=>'<div class="card" id="r-'+id+'"><div class="row"><b><span class="dot" style="background:'+AIS[id].c+'"></span>'+AIS[id].n+'</b><span class="mt">Consultando…</span></div></div>').join('');
+  await Promise.all(ids.map(async id=>{
+    const el=$('r-'+id);
+    try{
+      const t=await ask(id,p,IMG);results[id]={t,use:true};
+      el.innerHTML='<div class="row"><b><span class="dot" style="background:'+AIS[id].c+'"></span>'+AIS[id].n+'</b><label class="row" style="gap:8px">Incluir <span class="sw"><input type="checkbox" checked data-use="'+id+'"><i></i></span></label></div><div class="res">'+esc(t)+'</div><button class="b sm" style="margin-top:8px" data-copy="'+id+'">Copiar</button>';
+    }catch(e){el.innerHTML='<div class="row"><b><span class="dot" style="background:'+AIS[id].c+'"></span>'+AIS[id].n+'</b></div><div class="err res">'+esc(e.message)+'</div><button class="b sm" style="margin-top:8px" data-retry="'+id+'">Reintentar</button>'}
+  }));
+  $('send').disabled=false;$('consol').disabled=!Object.keys(results).length;
+};
+$('results').onclick=async e=>{
+  const d=e.target.dataset;
+  if(d.use){results[d.use].use=e.target.checked}
+  if(d.copy){try{await navigator.clipboard.writeText(results[d.copy].t);toast('Copiado.')}catch{toast('No se pudo copiar.',true)}}
+  if(d.retry){$('send').click()}
+};
+
+/* ---------- consolidar ---------- */
+$('consol').onclick=async()=>{
+  const sel=Object.entries(results).filter(([,r])=>r.use);
+  if(!sel.length)return toast('Incluye al menos una respuesta.',true);
+  const ids=['cl','oa','gm'].filter(id=>cfg[AIS[id].k]);
+  if(!ids.length)return toast('No hay ninguna API key configurada.',true);
+  const body=sel.map(([id,r])=>'### '+AIS[id].n+'\n'+r.t).join('\n\n');
+  const prompt='Consulta original: '+$('prompt').value+'\n\nRespuestas de varias IAs:\n'+body+'\n\nConsolida lo mejor en una sola ficha de producto para Shopify. Responde SOLO con JSON válido, sin texto extra ni bloques de código: {"title":"","body_html":"","tags":[],"price":"0.00","vendor":"","product_type":""}';
+  $('consol').disabled=true;$('consol').textContent='Consolidando…';
+  try{
+    let t=await ask(ids[0],prompt);t=t.replace(/```json|```/g,'').trim();
+    try{t=JSON.stringify(JSON.parse(t),null,2)}catch{toast('La IA no devolvió JSON válido. Corrígelo a mano antes de enviar.',true)}
+    $('finalTxt').value=t;$('final').style.display='block';$('final').scrollIntoView({behavior:'smooth'});
+  }catch(e){toast(e.message,true)}
+  $('consol').disabled=false;$('consol').textContent='Consolidar respuestas';
+};
+
+/* ---------- Shopify ---------- */
+const shReq=(path,o={})=>{
+  if(!cfg.shDomain||!cfg.shToken)throw new Error('Configura dominio y token de Shopify en Ajustes.');
+  return req('https://'+cfg.shDomain.replace(/^https?:\/\//,'').replace(/\/$/,'')+'/admin/api/'+SH_VER+path,{...o,headers:{...JH,'x-shopify-access-token':cfg.shToken}},true)
+};
+$('toShopify').onclick=async()=>{
+  let p;try{p=JSON.parse($('finalTxt').value)}catch{return toast('El JSON no es válido.',true)}
+  if(!p.title)return toast('Falta el título.',true);
+  if(!confirm('Se creará el producto “'+p.title+'” como borrador en Shopify.'))return;
+  try{
+    const j=await shReq('/products.json',{method:'POST',body:JSON.stringify({product:{title:p.title,body_html:p.body_html||'',vendor:p.vendor||'',product_type:p.product_type||'',tags:(p.tags||[]).join(','),status:'draft',variants:[{price:String(p.price||'0.00')}]}})});
+    toast('Borrador creado (ID '+(j.product&&j.product.id)+').');
+  }catch(e){toast(e.message,true)}
+};
+document.querySelectorAll('[data-sh]').forEach(b=>b.onclick=async()=>{
+  const k=b.dataset.sh,o=$('out');o.textContent='Cargando…';
+  try{
+    if(k==='products'){const j=await shReq('/products.json?limit=10&fields=id,title,status,variants');o.textContent=j.products.map(p=>p.title+' ['+p.status+'] · '+p.variants.length+' variantes').join('\n')||'Sin productos.'}
+    if(k==='orders'){const j=await shReq('/orders.json?status=any&limit=10&fields=name,total_price,currency,financial_status,fulfillment_status');o.textContent=j.orders.map(x=>x.name+' · '+x.total_price+' '+x.currency+' · '+x.financial_status+' · '+(x.fulfillment_status||'sin enviar')).join('\n')||'Sin pedidos.'}
+    if(k==='inventory'){const j=await shReq('/products.json?limit=20&fields=title,variants');o.textContent=j.products.map(p=>p.title+': '+p.variants.map(v=>v.inventory_quantity).join(', ')+' uds').join('\n')||'Sin datos.'}
+  }catch(e){o.textContent='Error: '+e.message}
+});
+
+/* ---------- Alibaba (petición firmada HMAC-SHA256) ---------- */
+async function alSearch(q){
+  if(!cfg.alEndpoint||!cfg.alKey||!cfg.alSecret||!cfg.alMethod)throw new Error('Completa endpoint, método, app key y secret de Alibaba en Ajustes.');
+  const P={app_key:cfg.alKey,method:cfg.alMethod,timestamp:String(Date.now()),sign_method:'sha256',keyword:q};
+  const base=Object.keys(P).sort().map(k=>k+P[k]).join('');
+  const hk=await crypto.subtle.importKey('raw',enc.encode(cfg.alSecret),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  const sig=[...new Uint8Array(await crypto.subtle.sign('HMAC',hk,enc.encode(base)))].map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+  const qs=new URLSearchParams({...P,sign:sig}).toString();
+  return req(cfg.alEndpoint+(cfg.alEndpoint.includes('?')?'&':'?')+qs,{method:'GET'},true);
+}
+async function runAl(q){
+  const o=$('out');o.textContent='Buscando…';
+  document.querySelector('nav [data-t=shop]').click();
+  try{o.textContent=JSON.stringify(await alSearch(q),null,2)}catch(e){o.textContent='Error: '+e.message}
+}
+$('alGo').onclick=()=>{const q=$('alq').value.trim();q?runAl(q):toast('Escribe una palabra clave.',true)};
+$('toAlibaba').onclick=()=>{let q='';try{q=JSON.parse($('finalTxt').value).title}catch{}q=q||$('prompt').value.slice(0,60);$('alq').value=q;runAl(q)};
+
+/* ---------- foto, voz, compartir y offline ---------- */
+let IMG=null;
+function setImg(blob){
+  if(!blob){IMG=null;$('thumb').textContent='';return}
+  const u=URL.createObjectURL(blob),im=new Image();
+  im.onload=()=>{
+    const s=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');
+    c.width=im.width*s;c.height=im.height*s;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    const d=c.toDataURL('image/jpeg',.8);IMG={mime:'image/jpeg',data:d.split(',')[1]};
+    $('thumb').innerHTML='<img src="'+d+'" alt="" style="height:64px;border-radius:8px;vertical-align:middle"> <button class="b sm" id="rmImg">Quitar foto</button>';
+    $('rmImg').onclick=()=>setImg(null);URL.revokeObjectURL(u)};
+  im.onerror=()=>toast('No se pudo leer la imagen.',true);im.src=u;
+}
+$('photoBtn').onclick=()=>$('photo').click();
+$('photo').onchange=e=>{if(e.target.files[0])setImg(e.target.files[0]);e.target.value=''};
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR)$('micBtn').style.display='none';
+else{let rec=null;$('micBtn').onclick=()=>{
+  if(rec){rec.stop();return}
+  rec=new SR();rec.lang='es-ES';rec.interimResults=false;rec.continuous=false;
+  rec.onresult=e=>{const t=[...e.results].map(r=>r[0].transcript).join(' ');$('prompt').value=($('prompt').value+' '+t).trim()};
+  rec.onerror=e=>toast('Dictado no disponible: '+e.error,true);
+  rec.onend=()=>{rec=null;$('micBtn').textContent='Dictar'};
+  rec.start();$('micBtn').textContent='Escuchando… toca para parar';
+}}
+
+async function readShared(){
+  if(!/[?&]shared=1/.test(location.search))return;
+  history.replaceState(null,'',location.pathname);
+  try{
+    const c=await caches.open('share'),m=await c.match('meta');
+    if(m){const j=await m.json();$('prompt').value=[j.title,j.text,j.url].filter(Boolean).join('\n');await c.delete('meta')}
+    const f=await c.match('file');if(f){setImg(await f.blob());await c.delete('file')}
+    toast('Contenido recibido. Revisa y envía.');
+  }catch{toast('No se pudo leer lo compartido.',true)}
+}
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
